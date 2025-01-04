@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run Python Script</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+
+        input[type="file"] {
+            margin: 20px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #output {
+            white-space: pre-wrap;
+            background-color: #222;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: scroll;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Run Python Script 24/7</h1>
+
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit">Run</button>
+    </form>
+
+    <form action="/stop" method="POST">
+        <button type="submit">Stop</button>
+    </form>
+
+    <div id="output">
+        <!-- Output from the Python script will appear here -->
+    </div>
+
+</body>
+</html>
