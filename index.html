@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload and Run Python Bot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #00ff00;
+        }
+        #output {
+            margin-top: 20px;
+            width: 80%;
+            height: 300px;
+            overflow-y: auto;
+            background-color: #333;
+            padding: 10px;
+            border-radius: 5px;
+            color: #fff;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        input[type="file"] {
+            background-color: #444;
+            border: 1px solid #888;
+            color: #fff;
+            padding: 10px;
+            margin: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Upload and Run Python Bot</h1>
+    <input type="file" id="file" />
+    <button onclick="uploadBot()">Run Bot</button>
+    <div id="status"></div>
+    <div id="output"></div>
+
+    <script>
+        async function uploadBot() {
+            const fileInput = document.getElementById('file');
+            if (!fileInput.files.length) {
+                document.getElementById('status').textContent = 'Please select a Python file to upload.';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            document.getElementById('status').textContent = 'Uploading...';
+
+            // Send the file to the Vercel serverless function
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            // Parse response as text
+            const result = await response.text();
+            
+            // Display the output in real-time
+            const outputElement = document.getElementById('output');
+            outputElement.textContent = result;
+        }
+    </script>
+</body>
+</html>
