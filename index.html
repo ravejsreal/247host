@@ -23,16 +23,18 @@
             
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
-
+    
             document.getElementById('status').textContent = 'Uploading...';
-            const response = await fetch('/upload', {
+            
+            // Update the URL to your Flask server's endpoint
+            const response = await fetch('https://your-flask-server-url.com/upload', {
                 method: 'POST',
                 body: formData,
             });
-
+    
             const result = await response.text();
             document.getElementById('status').textContent = result;
         }
-    </script>
+    </script>    
 </body>
 </html>
