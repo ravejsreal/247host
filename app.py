@@ -1,6 +1,7 @@
 from flask import Flask, render_template_string, request, jsonify, Response
 import subprocess
 import os
+import traceback
 
 app = Flask(__name__)
 
@@ -89,26 +90,21 @@ html_content = '''
     <script>
         $('#uploadButton').click(function() {
             var file = $('#fileInput')[0].files[0];
-            if (file) {
-                var formData = new FormData();
-                formData.append('file', file);
-                $.ajax({
-                    url: '/upload',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        alert(response.message);
-                    },
-                    error: function(xhr, status, error) {
-                        console.log('Upload failed:', status, error);
-                        alert('Upload failed. Check the console for errors.');
-                    }
-                });
-            } else {
-                alert("No file selected!");
-            }
+            var formData = new FormData();
+            formData.append('file', file);
+            $.ajax({
+                url: '/upload',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(xhr, status, error) {
+                    alert('Upload failed: ' + error);
+                }
+            });
         });
 
         $('#runButton').click(function() {
@@ -120,6 +116,9 @@ html_content = '''
                 data: JSON.stringify({filename: filename}),
                 success: function(response) {
                     $('#output').text(response.output);
+                },
+                error: function(xhr, status, error) {
+                    alert('Error running code: ' + error);
                 }
             });
         });
@@ -130,6 +129,9 @@ html_content = '''
                 type: 'POST',
                 success: function(response) {
                     alert(response.message);
+                },
+                error: function(xhr, status, error) {
+                    alert('Error stopping execution: ' + error);
                 }
             });
         });
@@ -148,12 +150,19 @@ def upload_file():
         file = request.files['file']
         if not file:
             raise ValueError("No file uploaded")
+        
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        print(f"Saving file to {file_path}")  # Debugging line to check the path
+        
         file.save(file_path)
+        print(f"File uploaded successfully: {file.filename}")  # Debugging line
+        
         return jsonify({'message': 'File uploaded successfully'})
     except Exception as e:
-        print(f"Error during file upload: {e}")
-        return jsonify({'message': f"Error during file upload: {e}"}), 500
+        error_message = f"Error during file upload: {e}"
+        print(error_message)
+        print(traceback.format_exc())  # Log the full stack trace
+        return jsonify({'message': error_message}), 500
 
 @app.route('/run', methods=['POST'])
 def run_code_route():
