@@ -1,17 +1,17 @@
-from flask import Flask, render_template_string, request, jsonify, Response
-import subprocess
 import os
-import traceback
+import subprocess
+from flask import Flask, render_template_string, request, jsonify, Response
+import sys
 
 app = Flask(__name__)
 
-running_process = None
+# Define upload folder
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# HTML template embedded in the Python file (index.html part)
+# HTML template for the frontend
 html_content = '''
 <!DOCTYPE html>
 <html lang="en">
@@ -100,25 +100,17 @@ html_content = '''
                 contentType: false,
                 success: function(response) {
                     alert(response.message);
-                },
-                error: function(xhr, status, error) {
-                    alert('Upload failed: ' + error);
                 }
             });
         });
 
         $('#runButton').click(function() {
-            var filename = $('#fileInput')[0].files[0].name;
             $.ajax({
                 url: '/run',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({filename: filename}),
                 success: function(response) {
                     $('#output').text(response.output);
-                },
-                error: function(xhr, status, error) {
-                    alert('Error running code: ' + error);
                 }
             });
         });
@@ -129,9 +121,6 @@ html_content = '''
                 type: 'POST',
                 success: function(response) {
                     alert(response.message);
-                },
-                error: function(xhr, status, error) {
-                    alert('Error stopping execution: ' + error);
                 }
             });
         });
@@ -146,32 +135,20 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    try:
-        file = request.files['file']
-        if not file:
-            raise ValueError("No file uploaded")
-        
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        print(f"Saving file to {file_path}")  # Debugging line to check the path
-        
-        file.save(file_path)
-        print(f"File uploaded successfully: {file.filename}")  # Debugging line
-        
-        return jsonify({'message': 'File uploaded successfully'})
-    except Exception as e:
-        error_message = f"Error during file upload: {e}"
-        print(error_message)
-        print(traceback.format_exc())  # Log the full stack trace
-        return jsonify({'message': error_message}), 500
+    file = request.files['file']
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+    
+    file.save(file_path)
+    return jsonify({'message': f'File {file.filename} uploaded successfully.'})
 
 @app.route('/run', methods=['POST'])
 def run_code_route():
-    global running_process
-    if running_process is None or running_process.poll() is not None:
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], request.json['filename'])
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'provocis.py')
+
+    if os.path.exists(file_path):
         return Response(run_code(file_path), mimetype='text/plain')
     else:
-        return jsonify({'message': 'Code is already running'})
+        return jsonify({'message': 'provocis.py file not found in the uploads folder.'})
 
 @app.route('/stop', methods=['POST'])
 def stop_code():
@@ -202,11 +179,9 @@ def run_code(file_path):
         stderr_line = running_process.stderr.readline()
         
         if stdout_line:
-            print(f"STDOUT: {stdout_line.strip()}")  # Output to console
-            yield stdout_line
+            output += stdout_line.strip() + '\n'
         if stderr_line:
-            print(f"STDERR: {stderr_line.strip()}")  # Output to console
-            yield stderr_line
+            output += stderr_line.strip() + '\n'
         
         # End of process
         if stdout_line == '' and stderr_line == '' and running_process.poll() is not None:
@@ -215,6 +190,8 @@ def run_code(file_path):
     running_process.stdout.close()
     running_process.stderr.close()
     running_process.wait()
+    
+    return jsonify({'output': output})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
