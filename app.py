@@ -97,6 +97,7 @@ html_content = '''
             })
             .catch(error => {
                 console.error('Error:', error);
+                document.getElementById('output').innerText = 'An error occurred: ' + error.message;
             });
         };
     </script>
@@ -113,9 +114,13 @@ def run_code_route():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'provocis.py')
 
     if os.path.exists(file_path):
-        return Response(run_code(file_path), mimetype='text/plain')
+        try:
+            output = run_code(file_path)
+            return jsonify({'output': output})
+        except Exception as e:
+            return jsonify({'error': f"Error running the script: {str(e)}"}), 500
     else:
-        return jsonify({'message': 'provocis.py file not found in the uploads folder.'})
+        return jsonify({'error': 'provocis.py file not found in the uploads folder.'}), 404
 
 @app.route('/stop', methods=['POST'])
 def stop_code():
@@ -158,7 +163,7 @@ def run_code(file_path):
     running_process.stderr.close()
     running_process.wait()
     
-    return jsonify({'output': output})
+    return output
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
