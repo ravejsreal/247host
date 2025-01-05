@@ -89,18 +89,26 @@ html_content = '''
     <script>
         $('#uploadButton').click(function() {
             var file = $('#fileInput')[0].files[0];
-            var formData = new FormData();
-            formData.append('file', file);
-            $.ajax({
-                url: '/upload',
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    alert(response.message);
-                }
-            });
+            if (file) {
+                var formData = new FormData();
+                formData.append('file', file);
+                $.ajax({
+                    url: '/upload',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        alert(response.message);
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Upload failed:', status, error);
+                        alert('Upload failed. Check the console for errors.');
+                    }
+                });
+            } else {
+                alert("No file selected!");
+            }
         });
 
         $('#runButton').click(function() {
@@ -136,9 +144,16 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    file = request.files['file']
-    file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
-    return jsonify({'message': 'File uploaded successfully'})
+    try:
+        file = request.files['file']
+        if not file:
+            raise ValueError("No file uploaded")
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        file.save(file_path)
+        return jsonify({'message': 'File uploaded successfully'})
+    except Exception as e:
+        print(f"Error during file upload: {e}")
+        return jsonify({'message': f"Error during file upload: {e}"}), 500
 
 @app.route('/run', methods=['POST'])
 def run_code_route():
