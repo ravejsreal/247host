@@ -1,3 +1,8 @@
 Flask
 gunicorn
 discord.py
+discord
+discord.ext import commands
+random
+string
+asyncio
