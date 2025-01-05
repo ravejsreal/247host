@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/app.py",  // Ensure this matches your file structure
+      "src": "api/app.py",  
       "use": "@vercel/python"
     }
   ],
@@ -10,6 +10,16 @@
     {
       "src": "/api/(.*)",
       "dest": "/api/app.py"
+    }
+  ],
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/app.py",
+      "use": "@vercel/python",
+      "config": {
+        "pythonVersion": "3.9"
+      }
     }
   ]
 }
