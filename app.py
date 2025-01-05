@@ -1,6 +1,6 @@
 import os
 import subprocess
-from flask import Flask, render_template_string, request, jsonify, Response
+from flask import Flask, render_template_string, jsonify, Response
 import sys
 
 app = Flask(__name__)
@@ -73,57 +73,32 @@ html_content = '''
             padding: 20px;
         }
     </style>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>Python Code Executor</h1>
-        <input type="file" id="fileInput">
-        <button id="uploadButton">Upload File</button>
-        <button id="runButton">Run Code</button>
-        <button id="stopButton">Stop Execution</button>
         
         <h2>Output:</h2>
         <div id="output">Waiting for output...</div>
     </div>
     
     <script>
-        $('#uploadButton').click(function() {
-            var file = $('#fileInput')[0].files[0];
-            var formData = new FormData();
-            formData.append('file', file);
-            $.ajax({
-                url: '/upload',
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    alert(response.message);
+        // Automatically trigger the 'run' route when the page loads
+        window.onload = function() {
+            fetch('/run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
                 }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('output').innerText = data.output;
+            })
+            .catch(error => {
+                console.error('Error:', error);
             });
-        });
-
-        $('#runButton').click(function() {
-            $.ajax({
-                url: '/run',
-                type: 'POST',
-                contentType: 'application/json',
-                success: function(response) {
-                    $('#output').text(response.output);
-                }
-            });
-        });
-
-        $('#stopButton').click(function() {
-            $.ajax({
-                url: '/stop',
-                type: 'POST',
-                success: function(response) {
-                    alert(response.message);
-                }
-            });
-        });
+        };
     </script>
 </body>
 </html>
@@ -132,14 +107,6 @@ html_content = '''
 @app.route('/')
 def index():
     return render_template_string(html_content)
-
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    file = request.files['file']
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-    
-    file.save(file_path)
-    return jsonify({'message': f'File {file.filename} uploaded successfully.'})
 
 @app.route('/run', methods=['POST'])
 def run_code_route():
